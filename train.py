@@ -304,7 +304,10 @@ def train(rank, a, h):
                 do_constant_folding=True,
                 input_names=['mel'],
                 output_names=['audio'],
-                dynamic_axes={'mel': {2: 'time_steps'}, 'audio': {1: 'time_steps'}}
+                dynamic_axes={
+                    'mel': {0: 'batch_size', 2: 'time_steps'},
+                    'audio': {0: 'batch_size', 1: 'time_steps'}
+                }
             )
             print(f"ONNX model exported to {onnx_filename}")
         except Exception as e:
