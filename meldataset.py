@@ -56,37 +56,28 @@ def mel_spectrogram(y, n_fft, num_mels, sampling_rate, hop_size, win_size, fmin,
 
     global mel_basis, hann_window
 
-    if fmax not in mel_basis:
-        librosa_mel_fn = librosa.filters.mel(sr=sampling_rate, n_fft=n_fft, n_mels=num_mels, fmin=fmin, fmax=fmax)
-        mel_basis[str(fmax)+'_'+str(y.device)] = torch.from_numpy(librosa_mel_fn).float().to(y.device)
+    if str(fmax)+'_'+str(y.device) not in mel_basis:
+        mel = librosa.filters.mel(sr=sampling_rate, n_fft=n_fft, n_mels=num_mels, fmin=fmin, fmax=fmax)
+        mel_basis[str(fmax)+'_'+str(y.device)] = torch.from_numpy(mel).float().to(y.device)
         hann_window[str(y.device)] = torch.hann_window(win_size).to(y.device)
 
     # Pad input
-    y = torch.nn.functional.pad(y.unsqueeze(1), (int((n_fft-hop_size)/2), int((n_fft-hop_size)/2)), mode='reflect')
+    y = torch.nn.functional.pad(y.unsqueeze(1), (int((n_fft - hop_size) / 2), int((n_fft - hop_size) / 2)), mode='reflect')
     y = y.squeeze(1)
 
     # Compute STFT
     spec = torch.stft(y, n_fft, hop_length=hop_size, win_length=win_size, window=hann_window[str(y.device)],
                       center=center, pad_mode='reflect', normalized=False, onesided=True, return_complex=True)
 
-    # Convert STFT to magnitude spectrogram
-    spec = torch.abs(spec)  # Ensure it's real-valued
-    spec = spec.squeeze(0)  # Remove unnecessary batch dim if present
+    # Compute magnitude spectrogram
+    spec = torch.sqrt(spec.real.pow(2) + spec.imag.pow(2) + 1e-9)  # Equivalent to the original
 
-    # Ensure spec has the correct shape for Mel conversion
-    if spec.dim() == 1:
-        spec = spec.unsqueeze(0)  # Reshape (513,) → (1, 513)
-    
-    if spec.shape[0] != mel_basis[str(fmax)+'_'+str(y.device)].shape[1]:
-        spec = spec.T  # Transpose to match Mel basis shape
-
-   
-
-    # Now apply the Mel filter
+    # Apply Mel filter
     spec = torch.matmul(mel_basis[str(fmax)+'_'+str(y.device)], spec)
 
-
+    # Normalize
     spec = spectral_normalize_torch(spec)
+
     return spec
 
 def get_dataset_filelist(a):
