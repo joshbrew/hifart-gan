@@ -21,7 +21,6 @@ from utils import plot_spectrogram, scan_checkpoint, load_checkpoint, save_check
 
 torch.backends.cudnn.benchmark = True
 
-
 def train(rank, a, h):
     # Initialize distributed training if needed
     if h.num_gpus > 1:
@@ -128,7 +127,7 @@ def train(rank, a, h):
             if rank == 0:
                 start_b = time.time()
 
-            # Move inputs to device (no need for torch.autograd.Variable)
+            # Move inputs to device
             x, y, _, y_mel = batch
             x = x.to(device, non_blocking=True)
             y = y.to(device, non_blocking=True).unsqueeze(1)
@@ -189,7 +188,7 @@ def train(rank, a, h):
                     print(f"Steps: {steps}, Gen Loss Total: {loss_gen_all.item():.3f}, "
                           f"Mel-Spec. Error: {mel_error:.3f}, s/b: {time.time() - start_b:.3f}")
 
-                # Checkpointing
+                # Checkpointing at intervals
                 if steps % a.checkpoint_interval == 0 and steps != 0:
                     cp_path_g = os.path.join(a.checkpoint_path, f"g_{steps:08d}")
                     save_checkpoint(cp_path_g, {
@@ -237,7 +236,6 @@ def train(rank, a, h):
                             if j <= 4:
                                 if steps == 0:
                                     sw.add_audio(f'gt/y_{j}', y_val[0], steps, h.sampling_rate)
-                                    # Move tensor to CPU and convert to numpy before plotting
                                     sw.add_figure(f'gt/y_spec_{j}', plot_spectrogram(x_val[0].cpu().numpy()), steps)
                                 sw.add_audio(f'generated/y_hat_{j}', y_g_hat_val[0], steps, h.sampling_rate)
                                 y_hat_spec = mel_spectrogram(
@@ -263,6 +261,55 @@ def train(rank, a, h):
         if rank == 0:
             print(f"Time taken for epoch {epoch + 1} is {int(time.time() - start)} sec\n")
 
+    # ===== Final Checkpoint Saving and ONNX Export (only on rank 0) =====
+    if rank == 0:
+        # Save final checkpoints
+        final_cp_path_g = os.path.join(a.checkpoint_path, "g_final")
+        save_checkpoint(final_cp_path_g, {
+            'generator': (generator.module if h.num_gpus > 1 else generator).state_dict()
+        })
+        final_cp_path_do = os.path.join(a.checkpoint_path, "do_final")
+        save_checkpoint(final_cp_path_do, {
+            'mpd': (mpd.module if h.num_gpus > 1 else mpd).state_dict(),
+            'msd': (msd.module if h.num_gpus > 1 else msd).state_dict(),
+            'optim_g': optim_g.state_dict(),
+            'optim_d': optim_d.state_dict(),
+            'steps': steps,
+            'epoch': epoch
+        })
+        print("Final model checkpoints saved.")
+
+        # Prepare the generator for export
+        export_model = generator.module if h.num_gpus > 1 else generator
+        export_model.eval()
+
+        # Save a backup file in case ONNX export fails
+        backup_file = os.path.join(a.checkpoint_path, "generator_backup.pt")
+        torch.save(export_model.state_dict(), backup_file)
+        print(f"Backup generator file saved to {backup_file} for future re-exporting if necessary.")
+
+        # Create a dummy input matching the expected shape.
+        # For HiFi-GAN, the generator typically expects a mel-spectrogram of shape (batch_size, n_mels, time_steps)
+        dummy_input = torch.randn(1, h.num_mels, 100, device=device)  # Adjust the time steps (here 100) as needed
+        onnx_filename = os.path.join(a.checkpoint_path, "generator.onnx")
+        
+        # Attempt the ONNX export
+        try:
+            torch.onnx.export(
+                export_model,
+                dummy_input,
+                onnx_filename,
+                export_params=True,
+                opset_version=12,
+                do_constant_folding=True,
+                input_names=['mel'],
+                output_names=['audio'],
+                dynamic_axes={'mel': {2: 'time_steps'}, 'audio': {1: 'time_steps'}}
+            )
+            print(f"ONNX model exported to {onnx_filename}")
+        except Exception as e:
+            print(f"ONNX export failed: {e}")
+            print(f"You can re-export the model later using the backup file at {backup_file}")
 
 def main():
     print("Initializing Training Process...")
@@ -300,7 +347,6 @@ def main():
         mp.spawn(train, nprocs=h.num_gpus, args=(a, h))
     else:
         train(0, a, h)
-
 
 if __name__ == '__main__':
     main()
