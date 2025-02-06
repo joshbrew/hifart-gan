@@ -92,13 +92,13 @@ def mel_spectrogram(y, n_fft, num_mels, sampling_rate, hop_size, win_size, fmin,
 def get_dataset_filelist(a):
     with open(a.input_training_file, 'r', encoding='utf-8') as fi:
         training_files = [
-            x.split('|')[0] if x.split('|')[0].startswith("drive/MyDrive/hifigan/dataset/wavs/") else os.path.join("drive/MyDrive/hifigan/dataset/wavs", x.split('|')[0])
+            x.split('|')[0] if x.split('|')[0].startswith("dataset/wavs/") else os.path.join("dataset/wavs", x.split('|')[0])
             for x in fi.read().split('\n') if len(x) > 0
         ]
 
     with open(a.input_validation_file, 'r', encoding='utf-8') as fi:
         validation_files = [
-            x.split('|')[0] if x.split('|')[0].startswith("drive/MyDrive/hifigan/dataset/wavs/") else os.path.join("drive/MyDrive/hifigan/dataset/wavs", x.split('|')[0])
+            x.split('|')[0] if x.split('|')[0].startswith("dataset/wavs/") else os.path.join("dataset/wavs", x.split('|')[0])
             for x in fi.read().split('\n') if len(x) > 0
         ]
 
