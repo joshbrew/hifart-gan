@@ -6,3 +6,5 @@ For even more data: https://www.kaggle.com/datasets/alecledoux/fart-recordings-d
 Comes with a ipynb notebook you can run on Google Colab if you upload this repo to your drive.
 
 You need pytorch and ffmpeg and CUDA support. Adjust batch sizes for your GPU. 16-32 is fine on an RTX 3070, 128-256 on an A100. 
+
+See [Original Readme](./Original_README.md) for more info.
