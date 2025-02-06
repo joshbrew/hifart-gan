@@ -1,5 +1,5 @@
 # hifart-gan
-HiFi-GAN optimized to about 40%-50% faster than the [original](https://github.com/jik876/hifi-gan) without tweaking model parameters just the train.py. Also with a fart sound library to train it to... well yeah. No idea if it converges, it takes like a week on a 3070 and I don't have a spare to leave running.
+HiFi-GAN optimized to about 40%-50% faster than the [original](https://github.com/jik876/hifi-gan) without tweaking model parameters just the train.py. Also with a fart sound library to train it to... well yeah. No idea if it converges, it takes like a week on a 3070 and I don't have a spare to leave running. If it doesn't work just replace the original files and there are a few fixes GPT can make for you in train.py and meldataset.py. Follow [AddingData.md](./AddingData.md) for how to add your datasets. There are a few relpaths you may need to change.
 
 For even more data: https://www.kaggle.com/datasets/alecledoux/fart-recordings-dataset
 
