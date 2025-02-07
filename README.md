@@ -8,3 +8,5 @@ Comes with a ipynb notebook you can run on Google Colab if you upload this repo 
 You need pytorch and ffmpeg and CUDA support. Adjust batch sizes for your GPU. 16-32 is fine on an RTX 3070, 128-256 on an A100. 
 
 See [Original Readme](./Original_README.md) for more info.
+
+Our attempt converged to 25%-30% error in 3100 (default) epochs. Took about 4 hours on an A100 (Google Colab w/ google drive copy of repo) at 4s per epoch. The models typically get trained to 500k-1M epochs for publishing. I got about 30s to 40s per epoch on my RTX 3070, better than the 60s-70s of the original code.

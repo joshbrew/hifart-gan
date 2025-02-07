@@ -13,4 +13,3 @@ You'll also want the CUDA dependencies with PyTorch, including torchvision and t
 > run `python3 prepare.py`
 > run `python3 train.py --config config_v3.json --input_wavs dataset/wavs --input_mels dataset/mels`
 
-We tweaked some stuff to fix errors with our dataset so we aren't sure yet if it converges.
