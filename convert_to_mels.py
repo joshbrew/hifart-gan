@@ -4,8 +4,8 @@ import librosa
 import librosa.display
 
 # Define input and output directories
-INPUT_DIR = os.path.expanduser("~/Desktop/audio/")  # Path to your WAV files
-OUTPUT_DIR = os.path.expanduser("~/Desktop/mel_spectrograms/")  # Path to save mel spectrograms
+INPUT_DIR = os.path.expanduser("./dataset/wavs/")  # Path to your WAV files
+OUTPUT_DIR = os.path.expanduser("./dataset/mels/")  # Path to save mel spectrograms
 
 # Ensure the output directory exists
 os.makedirs(OUTPUT_DIR, exist_ok=True)
@@ -16,8 +16,17 @@ def convert_wav_to_mel(wav_path, output_path, sr=22050, n_mels=80):
         # Load WAV file
         y, sr = librosa.load(wav_path, sr=sr)
 
-        # Convert to Mel spectrogram
-        mel_spectrogram = librosa.feature.melspectrogram(y=y, sr=sr, n_mels=n_mels)
+        # Convert to Mel spectrogram #MUST MATCH MODEL PARAMETERS, THIS IS FOR CONFIG_V3
+        mel_spectrogram = librosa.feature.melspectrogram(
+            y=y,
+            sr=sr,
+            n_fft=1024,
+            hop_length=256,
+            win_length=1024,
+            n_mels=n_mels,
+            fmin=0,
+            fmax=8000
+        )
 
         # Convert to dB scale for better visualization (optional)
         mel_spectrogram = librosa.power_to_db(mel_spectrogram, ref=np.max)

@@ -1,7 +1,7 @@
 import os
 from pydub import AudioSegment
 
-wav_dir = "dataset/wavs"
+wav_dir = "./dataset/wavs"
 
 for file in os.listdir(wav_dir):
     if file.endswith(".wav"):

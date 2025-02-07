@@ -1,13 +1,20 @@
 When adding a dataset, in this case programmed for a set of wav files, go in this order:
 
 First off:
+
 `pip install -r requirements.txt`
-Also:
+
+Also on linux:
+
 `sudo apt-get install ffmpeg`
+
+For windows you can download it and add the directory to PATH
 
 You'll also want the CUDA dependencies with PyTorch, including torchvision and torchaudio.
 
-> open convert.py and set the source wav file directory and target spectrogram npy file directory then run `python3 convert.py`
+> Place your wav audio dataset in ./dataset/wavs
+> run `python reformat_wavs.py` if not using 16 bit PWM audio
+> run `python convert_to_mels.py`  
 
 > run `python3 rename.py`
 > run `python3 prepare.py`
